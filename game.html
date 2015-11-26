@@ -1,0 +1,255 @@
+<meta charset="UTF-8">
+<style type="text/css">
+body {
+	font-family: "メイリオ";
+	background-color: #222;
+}
+a{
+	text-decoration: none;
+}
+#wrap {
+	position: relative;
+	height: 461px;
+}
+#game {
+	width: 455px;
+	height: 455px;
+	font-size: 0;
+	top: 0;
+	left: 0;
+	margin: 0;
+	padding: 0;
+	position: absolute;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	user-select: none;
+	z-index: 200;
+	background-image: linear-gradient( #000   11%,transparent 11%),
+		linear-gradient(90deg, #000   10%,transparent 10%);
+	background-size: 111px 111px;
+
+}
+#screen {
+	margin: 0;
+	padding: 0;
+	width: 457px;
+	height: 461px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 100;
+	background-color: #222;
+}
+#combo {
+	position: absolute;
+	font-size: 140px;
+	top: 105px;
+	left: 184px;
+}
+.panel {
+	margin-left: 11px;
+	margin-top: 11px;
+	width: 92px;
+	height: 92px;
+	display: inline-block;
+	border-radius: 12px;
+	border: 4px solid #000;
+/*	border: 4px solid #232344; */
+}
+
+
+</style>
+
+<div id="wrap">
+
+<div id="screen"><span id="combo">0</span></div>
+
+<div id="game" onSelectStart = "return false;" onMouseDown = "return false;">
+
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<br>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<br>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<br>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+<canvas class="panel"></canvas>
+
+</div>
+
+</div>
+
+<a href="#" onclick="gameStop()">やめる</a>
+<a href="#" onclick="gameStart()">もういっかい</a>
+
+<script type="text/javascript">
+
+
+
+var panelElements = document.getElementsByClassName("panel");
+var combo = document.getElementById("combo");
+var panelCTX = Array();
+var comboCount = 0;
+
+
+function init() {
+
+	for( var i = 0; i < panelElements.length; i++ ) {
+		panelCTX[i] = panelElements[i].getContext('2d');
+	}
+
+	for( var i = 0; i < panelElements.length; i++ ) {
+
+		panelElements[i].addEventListener("mousedown" , function($this) {
+			var panelElement = this;
+			var ctx = panelElement.getContext('2d');
+			var a = 1.0;
+
+			if(panelElement.touchId!=null) {
+				clearInterval(panelElement.touchId);
+				panelElement.touchId = null;
+			}
+			if(panelElement.missMotionId!=null) {
+				clearInterval(panelElement.missMotionId);
+				panelElement.missMotionId = null;
+			}
+			if(panelElement.gaugeMotionId!=null) {
+				comboCountUp();
+				clearInterval(panelElement.gaugeMotionId);
+				panelElement.gaugeMotionId = null;
+			}
+			panelElement.touchId = setInterval(function(){
+				a -= 0.05;
+				rgba = 'rgba(192, 80, 77,' + a + ')';
+				panelElement.width = panelElement.width;
+				ctx.fillStyle = rgba;
+				ctx.fillRect(0,0,300,300);
+				if(a<0) {
+					clearInterval(panelElement.touchId);
+					panelElement.touchId = null;
+				}
+			},40);
+		});
+
+		panelElements[i].addEventListener("contextmenu" , function (e){
+			e.preventDefault();
+			alert(this.missMotionId);
+		});
+	}
+}
+
+function panelAction(panelNumber){
+	var x,y,w,h;
+	x = y = 10;
+	w = h = 300;
+
+	function missMotion() {
+		var a = 1.0;
+		comboCountReset();
+		panelElements[panelNumber].missMotionId = setInterval(function(){
+			a -= 0.1;
+			rgba = 'rgba(192, 80, 77,' + a + ')';
+			panelElements[panelNumber].width = panelElements[panelNumber].width;
+			panelCTX[panelNumber].font= '40px メイリオ';
+			panelCTX[panelNumber].fillStyle = rgba;
+			panelCTX[panelNumber].fillText('miss...',15,55,520);
+			if(a<0) {
+				clearInterval(panelElements[panelNumber].missMotionId);
+				panelElements[panelNumber].missMotionId = null;
+			}
+		},80);
+	}
+
+	function gaugeMotion() {
+
+		panelElements[panelNumber].gaugeMotionId = setInterval(function(){
+			if(panelElements[panelNumber].touchId!=null) {
+				clearInterval(panelElements[panelNumber].touchId);
+				panelElements[panelNumber].touchId = null;
+			}
+			y+=1;
+			panelElements[panelNumber].width = panelElements[panelNumber].width;
+			panelCTX[panelNumber].fillStyle = 'rgb(0,191,255)';
+			panelCTX[panelNumber].fillRect(0,y, w*2, h);
+			if(y==panelElements[panelNumber].height) {
+				clearInterval(panelElements[panelNumber].gaugeMotionId);
+				panelElements[panelNumber].gaugeMotionId = null;
+				missMotion();
+			}
+		},10);
+	}
+
+	gaugeMotion();
+
+}
+
+function comboCountUp() {
+	countMotion();
+	comboCount+=1;
+	if(comboCount==10) combo.style.left = 145;
+	if(comboCount==100) combo.style.left = 98;
+	combo.innerHTML = comboCount;
+}
+
+function comboCountReset() {
+	countMotion();
+	comboCount = 0;
+	combo.style.left = 184;
+	combo.innerHTML = comboCount;
+}
+
+function countMotion() {
+	var top = 95
+	var ground = 105;
+	combo.style.top = top + "px";
+
+	var y = top
+	var b = ground
+	var v = 0
+	var R = 0.80;
+
+	function gravity() {
+		y+= ++v;
+		if( y >= b ) {
+		  	y = b;
+		  	v*= -R;
+		  	if ( !~~v ) {
+		  		clearInterval(g)
+		  	}
+		}
+		document.getElementById("combo").style.top = y + "px";
+	}
+	var g = setInterval(gravity, 10);
+}
+
+var gameId;
+
+function gameStart(){
+	var timeCount = 0;
+	gameStop();
+	gameId = setInterval(function(){
+		panelAction(timeCount);
+		timeCount++;
+		if(timeCount>15)timeCount=0;
+	},800);
+}
+
+function gameStop(){
+	clearInterval(gameId);
+}
+
+init();
+
+
+</script>
