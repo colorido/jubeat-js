@@ -101,6 +101,9 @@ var panelElements = document.getElementsByClassName("panel");
 var combo = document.getElementById("combo");
 var panelCTX = Array();
 var comboCount = 0;
+var gameId;
+
+// 2500ms 間を空けないといけない
 
 
 function init() {
@@ -233,20 +236,63 @@ function countMotion() {
 	var g = setInterval(gravity, 10);
 }
 
-var gameId;
+function loadJson(path,callback) {
+
+	var httpRequest = new XMLHttpRequest();
+	httpRequest.open('GET', path, true);
+
+	httpRequest.onreadystatechange = function (e){
+		var httpRequest = e.target;
+		if(httpRequest.readyState == 4) {
+			if(httpRequest.status == 200 || httpRequest.status == 201) {
+				var obj = JSON.parse(httpRequest.responseText);
+				callback(obj);
+			} else {
+				console.error("通信エラー");
+			}
+		}
+	};
+	httpRequest.send(null);
+}
+
+function gameRun(obj){
+	var musics = obj;
+
+	gameId = setInterval(function(){
+		var music = musics.shift();
+
+		music.forEach(function(val){
+			if(val==-1) {
+				clearInterval(gameId);
+			}else{
+				panelAction(val);
+			}
+		});
+	},2500);
+}
 
 function gameStart(){
-	var timeCount = 0;
 	gameStop();
-	gameId = setInterval(function(){
-		panelAction(timeCount);
-		timeCount++;
-		if(timeCount>15)timeCount=0;
-	},800);
+	loadJson("music.json",gameRun);
 }
 
 function gameStop(){
 	clearInterval(gameId);
+	for(var i = 0; i < panelElements.length; i++){
+		panelElements[i].width = panelElements[i].width;
+		if(panelElements[i].touchId!=null) {
+			clearInterval(panelElements[i].touchId);
+			panelElements[i].touchId = null;
+		}
+		if(panelElements[i].missMotionId!=null) {
+			clearInterval(panelElements[i].missMotionId);
+			panelElements[i].missMotionId = null;
+		}
+		if(panelElements[i].gaugeMotionId!=null) {
+			clearInterval(panelElements[i].gaugeMotionId);
+			panelElements[i].gaugeMotionId = null;
+		}
+	}
 }
 
 init();
